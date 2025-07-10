@@ -1,395 +1,568 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Control de Asistencia - Escáner QR</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+      .gradient-bg {
+        background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+      }
+      .scanner-frame {
+        position: relative;
+        overflow: hidden;
+      }
+      .scanner-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 4px solid white;
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+      }
+      .success-animation {
+        animation: pulse 0.6s ease-in-out;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
         }
-        .scanner-frame {
-            position: relative;
-            overflow: hidden;
+        50% {
+          transform: scale(1.05);
         }
-        .scanner-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
-            border: 4px solid white;
-            border-radius: 12px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+        100% {
+          transform: scale(1);
         }
-        .success-animation {
-            animation: pulse 0.6s ease-in-out;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+      }
     </style>
-</head>
-<body class="gradient-bg min-h-screen">
+  </head>
+  <body class="gradient-bg min-h-screen">
     <div class="max-w-md mx-auto p-4">
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-2xl font-bold text-gray-800">Control de Asistencia</h1>
-                <button onclick="toggleSettings()" class="p-2 text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-cog text-xl"></i>
+      <!-- Header -->
+      <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl font-bold text-gray-800">
+            Control de Asistencia
+          </h1>
+          <button
+            onclick="toggleSettings()"
+            class="p-2 text-gray-500 hover:text-gray-700"
+          >
+            <i class="fas fa-cog text-xl"></i>
+          </button>
+        </div>
+
+        <div class="text-center">
+          <div
+            id="currentDate"
+            class="text-lg font-semibold text-gray-700"
+          ></div>
+          <div
+            id="currentTime"
+            class="text-3xl font-bold text-indigo-600 mt-2"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Confirmación de escaneo -->
+      <div
+        id="successMessage"
+        class="bg-white rounded-lg shadow-lg p-6 mb-4 border-l-4 border-green-500 hidden success-animation"
+      >
+        <div class="flex items-center justify-center mb-4">
+          <i class="fas fa-check-circle text-green-500 text-6xl"></i>
+        </div>
+        <div class="text-center">
+          <div id="successIcon" class="text-2xl mb-2">✅</div>
+          <div class="text-xl font-bold text-gray-800 mb-2">
+            ¡Registro Exitoso!
+          </div>
+          <div id="successEmployee" class="text-lg text-gray-600 mb-1"></div>
+          <div
+            id="successAction"
+            class="inline-block px-4 py-2 rounded-full text-white font-semibold bg-green-500"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Escáner QR -->
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <div id="scannerInterface" class="text-center">
+          <i class="fas fa-camera text-indigo-600 text-8xl mb-4"></i>
+          <h2 class="text-xl font-bold text-gray-800 mb-2">
+            Escanear Código QR
+          </h2>
+          <p class="text-gray-600 mb-6">
+            Presiona el botón para escanear tu código QR
+          </p>
+          <button
+            onclick="startScanning()"
+            class="w-full bg-indigo-600 text-white py-4 px-6 rounded-lg text-xl font-semibold hover:bg-indigo-700 transition-colors"
+          >
+            <i class="fas fa-camera text-2xl mr-2"></i>
+            ESCANEAR QR
+          </button>
+        </div>
+
+        <div id="cameraInterface" class="text-center hidden">
+          <div class="scanner-frame mb-4">
+            <video
+              id="videoElement"
+              autoplay
+              playsinline
+              class="w-full h-64 object-cover rounded-lg"
+            ></video>
+            <div class="scanner-overlay"></div>
+          </div>
+          <p class="text-gray-600 mb-4">Coloca el código QR dentro del marco</p>
+          <button
+            onclick="stopScanning()"
+            class="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+
+      <!-- Botones de prueba para demostración -->
+      <div class="bg-white rounded-lg shadow-lg p-6 mt-4">
+        <h3 class="text-lg font-semibold mb-4 text-center">
+          Pruebas de Empleados
+        </h3>
+        <div id="employeeButtons" class="grid grid-cols-1 gap-2">
+          <!-- Se llenan dinámicamente con JavaScript -->
+        </div>
+      </div>
+
+      <!-- Panel de Configuración -->
+      <div
+        id="settingsPanel"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50"
+      >
+        <div class="min-h-screen flex items-center justify-center p-4">
+          <div class="bg-white rounded-lg shadow-lg max-w-md w-full">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold">Configuración</h2>
+                <button
+                  onclick="toggleSettings()"
+                  class="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  &times;
                 </button>
-            </div>
-            
-            <div class="text-center">
-                <div id="currentDate" class="text-lg font-semibold text-gray-700"></div>
-                <div id="currentTime" class="text-3xl font-bold text-indigo-600 mt-2"></div>
-            </div>
-        </div>
+              </div>
 
-        <!-- Confirmación de escaneo -->
-        <div id="successMessage" class="bg-white rounded-lg shadow-lg p-6 mb-4 border-l-4 border-green-500 hidden success-animation">
-            <div class="flex items-center justify-center mb-4">
-                <i class="fas fa-check-circle text-green-500 text-6xl"></i>
-            </div>
-            <div class="text-center">
-                <div id="successIcon" class="text-2xl mb-2">✅</div>
-                <div class="text-xl font-bold text-gray-800 mb-2">
-                    ¡Registro Exitoso!
+              <div class="space-y-4">
+                <div>
+                  <h3 class="font-semibold mb-2">Empleados Registrados</h3>
+                  <div id="employeeList" class="space-y-2">
+                    <!-- Se llena dinámicamente -->
+                  </div>
                 </div>
-                <div id="successEmployee" class="text-lg text-gray-600 mb-1"></div>
-                <div id="successAction" class="inline-block px-4 py-2 rounded-full text-white font-semibold bg-green-500"></div>
-            </div>
-        </div>
 
-        <!-- Escáner QR -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <div id="scannerInterface" class="text-center">
-                <i class="fas fa-camera text-indigo-600 text-8xl mb-4"></i>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">
-                    Escanear Código QR
-                </h2>
-                <p class="text-gray-600 mb-6">
-                    Presiona el botón para escanear tu código QR
-                </p>
-                <button onclick="startScanning()" class="w-full bg-indigo-600 text-white py-4 px-6 rounded-lg text-xl font-semibold hover:bg-indigo-700 transition-colors">
-                    <i class="fas fa-camera text-2xl mr-2"></i>
-                    ESCANEAR QR
+                <div>
+                  <h3 class="font-semibold mb-2">Últimos Registros</h3>
+                  <div
+                    id="recentRecords"
+                    class="space-y-2 max-h-40 overflow-y-auto"
+                  >
+                    <!-- Se llena dinámicamente -->
+                  </div>
+                </div>
+
+                <button
+                  onclick="exportToCSV()"
+                  class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700"
+                >
+                  <i class="fas fa-download mr-2"></i>
+                  Exportar Registros
                 </button>
+              </div>
             </div>
-
-            <div id="cameraInterface" class="text-center hidden">
-                <div class="scanner-frame mb-4">
-                    <video id="videoElement" autoplay playsinline class="w-full h-64 object-cover rounded-lg"></video>
-                    <div class="scanner-overlay"></div>
-                </div>
-                <p class="text-gray-600 mb-4">
-                    Coloca el código QR dentro del marco
-                </p>
-                <button onclick="stopScanning()" class="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors">
-                    Cancelar
-                </button>
-            </div>
+          </div>
         </div>
-
-        <!-- Botones de prueba para demostración -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mt-4">
-            <h3 class="text-lg font-semibold mb-4 text-center">
-                Pruebas de Empleados
-            </h3>
-            <div id="employeeButtons" class="grid grid-cols-1 gap-2">
-                <!-- Se llenan dinámicamente con JavaScript -->
-            </div>
-        </div>
-
-        <!-- Panel de Configuración -->
-        <div id="settingsPanel" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-            <div class="min-h-screen flex items-center justify-center p-4">
-                <div class="bg-white rounded-lg shadow-lg max-w-md w-full">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-bold">Configuración</h2>
-                            <button onclick="toggleSettings()" class="text-gray-500 hover:text-gray-700 text-2xl">
-                                &times;
-                            </button>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div>
-                                <h3 class="font-semibold mb-2">Empleados Registrados</h3>
-                                <div id="employeeList" class="space-y-2">
-                                    <!-- Se llena dinámicamente -->
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 class="font-semibold mb-2">Últimos Registros</h3>
-                                <div id="recentRecords" class="space-y-2 max-h-40 overflow-y-auto">
-                                    <!-- Se llena dinámicamente -->
-                                </div>
-                            </div>
-
-                            <button onclick="exportToCSV()" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700">
-                                <i class="fas fa-download mr-2"></i>
-                                Exportar Registros
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
     <script>
-        // Variables globales
-        let isScanning = false;
-        let videoStream = null;
-        let employees = [
-            { id: 'EMP001', name: 'Adán Brito Hernández', lastAction: null, lastTime: null },
-            { id: 'EMP002', name: 'Eduardo Alonso Herrera', lastAction: null, lastTime: null },
-            { id: 'EMP003', name: 'Enrique Garcia Olvera', lastAction: null, lastTime: null },
-            { id: 'EMP004', name: 'Esteban Gutierrez Cruz', lastAction: null, lastTime: null },
-            { id: 'EMP005', name: 'Israel Ramirez Cruz', lastAction: null, lastTime: null },
-            { id: 'EMP006', name: 'Monzerrat Gutierrez Rojas', lastAction: null, lastTime: null },
-            { id: 'EMP007', name: 'Paulina Priscila Leal Becerril', lastAction: null, lastTime: null },
-            { id: 'EMP008', name: 'Rodrigo Hernández Pérez', lastAction: null, lastTime: null },
-            { id: 'EMP009', name: 'Virginia Becerril Rico', lastAction: null, lastTime: null },
-            { id: 'EMP010', name: 'Xanat Rodrigues Acosta', lastAction: null, lastTime: null }
-        ];
-        let records = [];
+      // Variables globales
+      let isScanning = false;
+      let videoStream = null;
+      let employees = [
+        {
+          id: "EMP001",
+          name: "Adán Brito Hernández",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP002",
+          name: "Eduardo Alonso Herrera",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP003",
+          name: "Enrique Garcia Olvera",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP004",
+          name: "Esteban Gutierrez Cruz",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP005",
+          name: "Israel Ramirez Cruz",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP006",
+          name: "Monzerrat Gutierrez Rojas",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP007",
+          name: "Paulina Priscila Leal Becerril",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP008",
+          name: "Rodrigo Hernández Pérez",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP009",
+          name: "Virginia Becerril Rico",
+          lastAction: null,
+          lastTime: null,
+        },
+        {
+          id: "EMP010",
+          name: "Xanat Rodrigues Acosta",
+          lastAction: null,
+          lastTime: null,
+        },
+      ];
+      let records = [];
 
-        // Tipos de registro
-        const registryTypes = [
-            { id: 'entrada', name: 'Entrada', icon: '🏢', color: 'bg-green-500' },
-            { id: 'salida_desayuno', name: 'Salida Desayuno', icon: '☕', color: 'bg-yellow-500' },
-            { id: 'regreso_desayuno', name: 'Regreso Desayuno', icon: '🔄', color: 'bg-blue-500' },
-            { id: 'salida_comida', name: 'Salida Comida', icon: '🍽️', color: 'bg-orange-500' },
-            { id: 'regreso_comida', name: 'Regreso Comida', icon: '🔄', color: 'bg-blue-500' },
-            { id: 'salida', name: 'Salida', icon: '🚪', color: 'bg-red-500' }
-        ];
+      // Tipos de registro
+      const registryTypes = [
+        { id: "entrada", name: "Entrada", icon: "🏢", color: "bg-green-500" },
+        {
+          id: "salida_desayuno",
+          name: "Salida Desayuno",
+          icon: "☕",
+          color: "bg-yellow-500",
+        },
+        {
+          id: "regreso_desayuno",
+          name: "Regreso Desayuno",
+          icon: "🔄",
+          color: "bg-blue-500",
+        },
+        {
+          id: "salida_comida",
+          name: "Salida Comida",
+          icon: "🍽️",
+          color: "bg-orange-500",
+        },
+        {
+          id: "regreso_comida",
+          name: "Regreso Comida",
+          icon: "🔄",
+          color: "bg-blue-500",
+        },
+        { id: "salida", name: "Salida", icon: "🚪", color: "bg-red-500" },
+      ];
 
-        // Actualizar hora cada segundo
-        function updateTime() {
-            const now = new Date();
-            
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('es-MX', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('es-MX');
+      // Actualizar hora cada segundo
+      function updateTime() {
+        const now = new Date();
+
+        document.getElementById("currentDate").textContent =
+          now.toLocaleDateString("es-MX", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+        document.getElementById("currentTime").textContent =
+          now.toLocaleTimeString("es-MX");
+      }
+
+      // Determinar el siguiente tipo de registro
+      function getNextRegistryType(employee) {
+        if (!employee.lastAction) return registryTypes[0];
+
+        const currentIndex = registryTypes.findIndex(
+          (type) => type.id === employee.lastAction
+        );
+        const nextIndex = (currentIndex + 1) % registryTypes.length;
+        return registryTypes[nextIndex];
+      }
+
+      // Iniciar escaneo
+      async function startScanning() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+          });
+
+          const videoElement = document.getElementById("videoElement");
+          videoElement.srcObject = stream;
+          videoStream = stream;
+
+          document.getElementById("scannerInterface").classList.add("hidden");
+          document.getElementById("cameraInterface").classList.remove("hidden");
+
+          isScanning = true;
+        } catch (error) {
+          console.error("Error al acceder a la cámara:", error);
+          alert("No se pudo acceder a la cámara. Verifica los permisos.");
+        }
+      }
+
+      // Detener escaneo
+      function stopScanning() {
+        if (videoStream) {
+          videoStream.getTracks().forEach((track) => track.stop());
+          videoStream = null;
         }
 
-        // Determinar el siguiente tipo de registro
-        function getNextRegistryType(employee) {
-            if (!employee.lastAction) return registryTypes[0];
-            
-            const currentIndex = registryTypes.findIndex(type => type.id === employee.lastAction);
-            const nextIndex = (currentIndex + 1) % registryTypes.length;
-            return registryTypes[nextIndex];
+        document.getElementById("scannerInterface").classList.remove("hidden");
+        document.getElementById("cameraInterface").classList.add("hidden");
+
+        isScanning = false;
+      }
+
+      // URL de tu Google Apps Script
+      const GOOGLE_SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbwjxYTR_s_rhXDjr619aEkI5GZHGPFDHJMCZNULZBNALwKgUVEjwS8f_j61UxonWI2r/exec";
+
+      // Enviar datos a Google Sheets
+      async function sendToGoogleSheets(recordData) {
+        try {
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(recordData),
+          });
+
+          console.log("✅ Datos enviados a Google Sheets exitosamente");
+          return true;
+        } catch (error) {
+          console.error("❌ Error enviando a Google Sheets:", error);
+          return false;
         }
+      }
 
-        // Iniciar escaneo
-        async function startScanning() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
-                
-                const videoElement = document.getElementById('videoElement');
-                videoElement.srcObject = stream;
-                videoStream = stream;
-                
-                document.getElementById('scannerInterface').classList.add('hidden');
-                document.getElementById('cameraInterface').classList.remove('hidden');
-                
-                isScanning = true;
-            } catch (error) {
-                console.error('Error al acceder a la cámara:', error);
-                alert('No se pudo acceder a la cámara. Verifica los permisos.');
-            }
+      // Procesar escaneo de QR
+      async function processQRScan(employee) {
+        const now = new Date();
+        const nextAction = getNextRegistryType(employee);
+
+        const newRecord = {
+          id: Date.now(),
+          employeeId: employee.id,
+          employeeName: employee.name,
+          action: nextAction.id,
+          actionName: nextAction.name,
+          timestamp: now.toISOString(),
+          date: now.toLocaleDateString("es-MX"),
+          time: now.toLocaleTimeString("es-MX"),
+        };
+
+        // Actualizar registros locales
+        records.push(newRecord);
+
+        // Actualizar empleado
+        const employeeIndex = employees.findIndex(
+          (emp) => emp.id === employee.id
+        );
+        employees[employeeIndex].lastAction = nextAction.id;
+        employees[employeeIndex].lastTime = now;
+
+        // Enviar a Google Sheets
+        const success = await sendToGoogleSheets(newRecord);
+
+        // Mostrar confirmación
+        showSuccessMessage(employee.name, nextAction, success);
+
+        // Detener cámara
+        stopScanning();
+
+        // Actualizar interfaz
+        updateEmployeeButtons();
+        updateSettingsPanel();
+      }
+
+      // Mostrar mensaje de éxito
+      function showSuccessMessage(
+        employeeName,
+        action,
+        googleSheetsSuccess = true
+      ) {
+        document.getElementById("successEmployee").textContent = employeeName;
+        document.getElementById("successAction").textContent = action.name;
+        document.getElementById(
+          "successAction"
+        ).className = `inline-block px-4 py-2 rounded-full text-white font-semibold ${action.color}`;
+        document.getElementById("successIcon").textContent = action.icon;
+
+        // Agregar indicador de estado de Google Sheets
+        const successDiv = document.getElementById("successMessage");
+        const statusIndicator = googleSheetsSuccess
+          ? '<div class="text-sm text-green-600 mt-2">📊 Guardado en Google Sheets</div>'
+          : '<div class="text-sm text-yellow-600 mt-2">⚠️ Guardado localmente (revisar conexión)</div>';
+
+        successDiv.querySelector(".text-center").innerHTML += statusIndicator;
+        successDiv.classList.remove("hidden");
+
+        // Ocultar después de 4 segundos
+        setTimeout(() => {
+          successDiv.classList.add("hidden");
+          // Limpiar el indicador para la próxima vez
+          const indicator = successDiv.querySelector(".text-sm");
+          if (indicator) indicator.remove();
+        }, 4000);
+      }
+
+      // Simular escaneo para pruebas
+      function simulateQRScan(employeeId) {
+        const employee = employees.find((emp) => emp.id === employeeId);
+        if (employee) {
+          processQRScan(employee);
         }
+      }
 
-        // Detener escaneo
-        function stopScanning() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-            }
-            
-            document.getElementById('scannerInterface').classList.remove('hidden');
-            document.getElementById('cameraInterface').classList.add('hidden');
-            
-            isScanning = false;
-        }
+      // Actualizar botones de empleados
+      function updateEmployeeButtons() {
+        const container = document.getElementById("employeeButtons");
+        container.innerHTML = "";
 
-        // Procesar escaneo de QR
-        function processQRScan(employee) {
-            const now = new Date();
-            const nextAction = getNextRegistryType(employee);
-            
-            const newRecord = {
-                id: Date.now(),
-                employeeId: employee.id,
-                employeeName: employee.name,
-                action: nextAction.id,
-                actionName: nextAction.name,
-                timestamp: now,
-                date: now.toLocaleDateString('es-MX'),
-                time: now.toLocaleTimeString('es-MX')
-            };
-
-            // Actualizar registros
-            records.push(newRecord);
-            
-            // Actualizar empleado
-            const employeeIndex = employees.findIndex(emp => emp.id === employee.id);
-            employees[employeeIndex].lastAction = nextAction.id;
-            employees[employeeIndex].lastTime = now;
-
-            // Mostrar confirmación
-            showSuccessMessage(employee.name, nextAction);
-
-            // Detener cámara
-            stopScanning();
-
-            // Actualizar interfaz
-            updateEmployeeButtons();
-            updateSettingsPanel();
-
-            // Simular envío a Google Sheets
-            console.log('Enviando a Google Sheets:', newRecord);
-        }
-
-        // Mostrar mensaje de éxito
-        function showSuccessMessage(employeeName, action) {
-            document.getElementById('successEmployee').textContent = employeeName;
-            document.getElementById('successAction').textContent = action.name;
-            document.getElementById('successAction').className = `inline-block px-4 py-2 rounded-full text-white font-semibold ${action.color}`;
-            document.getElementById('successIcon').textContent = action.icon;
-            
-            const successDiv = document.getElementById('successMessage');
-            successDiv.classList.remove('hidden');
-            
-            // Ocultar después de 3 segundos
-            setTimeout(() => {
-                successDiv.classList.add('hidden');
-            }, 3000);
-        }
-
-        // Simular escaneo para pruebas
-        function simulateQRScan(employeeId) {
-            const employee = employees.find(emp => emp.id === employeeId);
-            if (employee) {
-                processQRScan(employee);
-            }
-        }
-
-        // Actualizar botones de empleados
-        function updateEmployeeButtons() {
-            const container = document.getElementById('employeeButtons');
-            container.innerHTML = '';
-            
-            employees.slice(0, 5).forEach(employee => {
-                const nextAction = getNextRegistryType(employee);
-                const button = document.createElement('button');
-                button.className = `p-3 rounded-lg text-white font-semibold ${nextAction.color} hover:opacity-90 transition-opacity`;
-                button.onclick = () => simulateQRScan(employee.id);
-                button.innerHTML = `
+        employees.slice(0, 5).forEach((employee) => {
+          const nextAction = getNextRegistryType(employee);
+          const button = document.createElement("button");
+          button.className = `p-3 rounded-lg text-white font-semibold ${nextAction.color} hover:opacity-90 transition-opacity`;
+          button.onclick = () => simulateQRScan(employee.id);
+          button.innerHTML = `
                     <div class="flex items-center justify-between">
                         <span>${employee.name}</span>
                         <span>${nextAction.icon} ${nextAction.name}</span>
                     </div>
                 `;
-                container.appendChild(button);
-            });
-        }
+          container.appendChild(button);
+        });
+      }
 
-        // Toggle panel de configuración
-        function toggleSettings() {
-            const panel = document.getElementById('settingsPanel');
-            panel.classList.toggle('hidden');
-            updateSettingsPanel();
-        }
+      // Toggle panel de configuración
+      function toggleSettings() {
+        const panel = document.getElementById("settingsPanel");
+        panel.classList.toggle("hidden");
+        updateSettingsPanel();
+      }
 
-        // Actualizar panel de configuración
-        function updateSettingsPanel() {
-            // Actualizar lista de empleados
-            const employeeList = document.getElementById('employeeList');
-            employeeList.innerHTML = '';
-            
-            employees.forEach(employee => {
-                const div = document.createElement('div');
-                div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded';
-                
-                const lastActionText = employee.lastAction ? 
-                    registryTypes.find(t => t.id === employee.lastAction)?.name :
-                    'Sin registros';
-                
-                div.innerHTML = `
+      // Actualizar panel de configuración
+      function updateSettingsPanel() {
+        // Actualizar lista de empleados
+        const employeeList = document.getElementById("employeeList");
+        employeeList.innerHTML = "";
+
+        employees.forEach((employee) => {
+          const div = document.createElement("div");
+          div.className =
+            "flex items-center justify-between p-3 bg-gray-50 rounded";
+
+          const lastActionText = employee.lastAction
+            ? registryTypes.find((t) => t.id === employee.lastAction)?.name
+            : "Sin registros";
+
+          div.innerHTML = `
                     <div>
                         <div class="font-medium">${employee.name}</div>
                         <div class="text-sm text-gray-500">${employee.id}</div>
                     </div>
                     <div class="text-sm">
-                        <span class="${employee.lastAction ? 'text-green-600' : 'text-gray-400'}">
+                        <span class="${
+                          employee.lastAction
+                            ? "text-green-600"
+                            : "text-gray-400"
+                        }">
                             ${lastActionText}
                         </span>
                     </div>
                 `;
-                employeeList.appendChild(div);
-            });
+          employeeList.appendChild(div);
+        });
 
-            // Actualizar registros recientes
-            const recentRecords = document.getElementById('recentRecords');
-            recentRecords.innerHTML = '';
-            
-            records.slice(-5).reverse().forEach(record => {
-                const div = document.createElement('div');
-                div.className = 'p-2 bg-gray-50 rounded text-sm';
-                div.innerHTML = `
+        // Actualizar registros recientes
+        const recentRecords = document.getElementById("recentRecords");
+        recentRecords.innerHTML = "";
+
+        records
+          .slice(-5)
+          .reverse()
+          .forEach((record) => {
+            const div = document.createElement("div");
+            div.className = "p-2 bg-gray-50 rounded text-sm";
+            div.innerHTML = `
                     <div class="font-medium">${record.employeeName}</div>
                     <div class="text-gray-600">${record.actionName} - ${record.time}</div>
                 `;
-                recentRecords.appendChild(div);
-            });
-        }
+            recentRecords.appendChild(div);
+          });
+      }
 
-        // Exportar a CSV
-        function exportToCSV() {
-            const headers = ['Fecha', 'Hora', 'Empleado', 'Acción'];
-            const csvContent = [
-                headers.join(','),
-                ...records.map(record => 
-                    `${record.date},${record.time},${record.employeeName},${record.actionName}`
-                )
-            ].join('\n');
+      // Exportar a CSV
+      function exportToCSV() {
+        const headers = ["Fecha", "Hora", "Empleado", "Acción"];
+        const csvContent = [
+          headers.join(","),
+          ...records.map(
+            (record) =>
+              `${record.date},${record.time},${record.employeeName},${record.actionName}`
+          ),
+        ].join("\n");
 
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `registros_asistencia_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `registros_asistencia_${
+          new Date().toISOString().split("T")[0]
+        }.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
 
-        // Inicializar aplicación
-        function initApp() {
-            updateTime();
-            setInterval(updateTime, 1000);
-            updateEmployeeButtons();
-        }
+      // Inicializar aplicación
+      function initApp() {
+        updateTime();
+        setInterval(updateTime, 1000);
+        updateEmployeeButtons();
+      }
 
-        // Iniciar cuando la página esté lista
-        document.addEventListener('DOMContentLoaded', initApp);
+      // Iniciar cuando la página esté lista
+      document.addEventListener("DOMContentLoaded", initApp);
     </script>
-</body>
+  </body>
 </html>
