@@ -150,11 +150,16 @@
         let isScanning = false;
         let videoStream = null;
         let employees = [
-            { id: 'EMP001', name: 'Juan Pérez', lastAction: null, lastTime: null },
-            { id: 'EMP002', name: 'María García', lastAction: null, lastTime: null },
-            { id: 'EMP003', name: 'Carlos López', lastAction: null, lastTime: null },
-            { id: 'EMP004', name: 'Ana Rodríguez', lastAction: null, lastTime: null },
-            { id: 'EMP005', name: 'Luis Martínez', lastAction: null, lastTime: null }
+            { id: 'EMP001', name: 'Adán Brito Hernández', lastAction: null, lastTime: null },
+            { id: 'EMP002', name: 'Eduardo Alonso Herrera', lastAction: null, lastTime: null },
+            { id: 'EMP003', name: 'Enrique Garcia Olvera', lastAction: null, lastTime: null },
+            { id: 'EMP004', name: 'Esteban Gutierrez Cruz', lastAction: null, lastTime: null },
+            { id: 'EMP005', name: 'Israel Ramirez Cruz', lastAction: null, lastTime: null },
+            { id: 'EMP006', name: 'Monzerrat Gutierrez Rojas', lastAction: null, lastTime: null },
+            { id: 'EMP007', name: 'Paulina Priscila Leal Becerril', lastAction: null, lastTime: null },
+            { id: 'EMP008', name: 'Rodrigo Hernández Pérez', lastAction: null, lastTime: null },
+            { id: 'EMP009', name: 'Virginia Becerril Rico', lastAction: null, lastTime: null },
+            { id: 'EMP010', name: 'Xanat Rodrigues Acosta', lastAction: null, lastTime: null }
         ];
         let records = [];
 
@@ -292,7 +297,7 @@
             const container = document.getElementById('employeeButtons');
             container.innerHTML = '';
             
-            employees.slice(0, 3).forEach(employee => {
+            employees.slice(0, 5).forEach(employee => {
                 const nextAction = getNextRegistryType(employee);
                 const button = document.createElement('button');
                 button.className = `p-3 rounded-lg text-white font-semibold ${nextAction.color} hover:opacity-90 transition-opacity`;
